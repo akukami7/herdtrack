@@ -104,11 +104,19 @@ export default function TrackerPage() {
       if (now - lastSentRef.current < 10000) return;
       lastSentRef.current = now;
 
+      const accuracy = position.coords.accuracy;
+
+      // Если погрешность больше 30 метров при точном режиме, игнорируем первые неточные замеры
+      if (accuracy > 30 && lastLocation === null) {
+        setStatus(`Координаты неточные (погрешность ${Math.round(accuracy)}м), жду спутники...`);
+        return;
+      }
+
       const payload = {
         animal_id: selectedAnimal.id,
         lat: position.coords.latitude,
         lng: position.coords.longitude,
-        accuracy: position.coords.accuracy,
+        accuracy: accuracy,
         speed: position.coords.speed,
         battery: 90,
       };
@@ -160,7 +168,7 @@ export default function TrackerPage() {
       },
       {
         enableHighAccuracy: highAccuracy,
-        maximumAge: 10000,
+        maximumAge: highAccuracy ? 0 : 10000,
         timeout: 30000,
       }
     );
